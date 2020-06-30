@@ -1,0 +1,4 @@
+INSERT INTO joke(title,img_url,alt_text,votes) VALUES("28-Hour Day",{'img_url':"https://imgs.xkcd.com/comics/28_hour_day.png","msg":"ok",'status':True},'Small print: this schedule will eventually drive one stark raving mad.',0);
+INSERT INTO joke(title,img_url,alt_text,votes) VALUES('Dependencies','https://imgs.xkcd.com/comics/dependencies.png','The prereqs for CPSC 357, the class on package management, are CPSC 432, CPSC 357, and glibc2.5 or later.',0);
+INSERT INTO joke(title,img_url,alt_text,votes) VALUES('Quirky Girls','https://imgs.xkcd.com/comics/quirky_girls.png',"Romantic comedy heroines, I'm talking to you.",0);
+INSERT INTO joke(title,img_url,alt_text,votes) VALUES('Actuarial',"https://imgs.xkcd.com/comics/actuarial.png","I started to do the tables for more famous people but it got really depressing and morbid and I had to go outside.  Hat guy wins again.",0);
