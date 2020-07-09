@@ -3,7 +3,6 @@ from ..models.ResourceModel import Resource
 from ..models.CategoryModel import Category
 from ..models.FootprintModel import Footprint
 import requests
-import asyncio
 
 
 def load_quote_from_api():
@@ -51,9 +50,11 @@ def load_cat():
 def load_data():
     load_cat()
     quote_payload=load_quote_from_api()
-    res=db.session.execute('select id from category where title="quote"')
+    res=Category.query.filter(Category.title=="quote").all()
+
+    # res=db.session.execute('select id from category where title="quote"')
     for a in res:
-        cat_id=a[0]
+        cat_id=a.id
         break
     
     for i in range(0,5):
@@ -62,10 +63,10 @@ def load_data():
     
     db.session.commit()
 
-
-    res=db.session.execute('select id from category where title="joke"')
+    res=Category.query.filter(Category.title=="joke").all()
+    # res=db.session.execute('select id from category where title="joke"')
     for a in res:
-        cat_id=a[0]
+        cat_id=a.id
         break
     print('***************',cat_id)
 
@@ -81,9 +82,10 @@ def load_data():
 
     
     video_payload=load_video_from_api('')
-    res=db.session.execute('select id from category where title="video"')
+    res=Category.query.filter(Category.title=="video").all()
+    # res=db.session.execute('select id from category where title="video"')
     for a in res:
-        cat_id=a[0]
+        cat_id=a.id
         break
     
     for i in range(0,len(video_payload)):
@@ -121,15 +123,19 @@ def add_vote(payload):
             foot_flag=True
             foot=Footprint(resource_id=res_id,user_id=user_id,up_votes=1)
             db.session.add(foot)
-            query='UPDATE resource SET up_votes=up_votes+1 WHERE id="%s"'%res_id
-            db.session.execute(query)
+            # query='UPDATE resource SET up_votes=up_votes+1 WHERE id="%s"'%res_id
+            # db.session.execute(query)
+            res=Resource.query.filter_by(id=res_id).first()
+            res.up_votes=res.up_votes+1
             db.session.commit()
         else:
             foot_flag=True
             foot=Footprint(resource_id=res_id,user_id=user_id,down_votes=1)
             db.session.add(foot)
-            query='UPDATE resource SET down_votes=down_votes+1 WHERE id="%s"'%res_id
-            db.session.execute(query)
+            # query='UPDATE resource SET down_votes=down_votes+1 WHERE id="%s"'%res_id
+            # db.session.execute(query)
+            res=Resource.query.filter_by(id=res_id).first()
+            res.down_votes=res.down_votes+1
             db.session.commit()
     
     
@@ -139,16 +145,22 @@ def add_vote(payload):
             u_foot=Footprint.query.filter(Footprint.resource_id==res_id,Footprint.user_id==user_id).first()
             u_foot.up_votes=0
             u_foot.down_votes=1
-            u_res='UPDATE resource SET down_votes=down_votes+1,up_votes=up_votes-1 WHERE id="%s"'%res_id
-            db.session.execute(u_res)
+            # u_res='UPDATE resource SET down_votes=down_votes+1,up_votes=up_votes-1 WHERE id="%s"'%res_id
+            # db.session.execute(u_res)
+            res=Resource.query.filter_by(id=res_id).first()
+            res.up_votes=res.up_votes-1
+            res.down_votes=res.down_votes+1
             db.session.commit()
         elif d_c==1 and vote_name=="up_votes":
             foot_flag=True
             d_foot=Footprint.query.filter(Footprint.resource_id==res_id,Footprint.user_id==user_id).first()
             d_foot.up_votes=1
             d_foot.down_votes=0
-            d_res='UPDATE resource SET down_votes=down_votes-1,up_votes=up_votes+1 WHERE id="%s"'%res_id
-            db.session.execute(d_res)
+            # d_res='UPDATE resource SET down_votes=down_votes-1,up_votes=up_votes+1 WHERE id="%s"'%res_id
+            # db.session.execute(d_res)
+            res=Resource.query.filter_by(id=res_id).first()
+            res.up_votes=res.up_votes+1
+            res.down_votes=res.down_votes-1
             db.session.commit()
 
     
@@ -177,9 +189,10 @@ def add_vote(payload):
         break
 
     
-    res11=db.session.execute('''select title from category where id="%s"'''%temp_dict['category_name'])
+    res11=Category.query.filter(Category.id==temp_dict['category_name']).all()
+    # res11=db.session.execute('''select title from category where id="%s"'''%temp_dict['category_name'])
     for a in res11:
-        cat_name=a[0]
+        cat_name=a.title
         break  
 
     temp_dict['category_name']=cat_name   

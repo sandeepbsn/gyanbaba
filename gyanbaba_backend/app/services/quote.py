@@ -7,10 +7,11 @@ import random
 
 
 def get_quote(user_channel_id):
-
-    res=db.session.execute('select id from category where title="quote"')
+    
+    res=Category.query.filter(Category.title=="quote").all()
+    # res=db.session.execute('select id from category where title="quote"')
     for a in res:
-        cat_id=a[0]
+        cat_id=a.id
         break
 
     # res1=db.session.execute('''select id from user where user_channel_id="%s"'''%channel_id)
@@ -18,10 +19,11 @@ def get_quote(user_channel_id):
     #     user_id=a[0]
     #     break   
 
-    res2=db.session.execute('select resource_id from footprint where user_id="%s"'''%user_channel_id)
+    res2=Footprint.query.filter(Footprint.user_id==user_channel_id).all()
+    # res2=db.session.execute('select resource_id from footprint where user_id="%s"'''%user_channel_id)
     all_res=[]
     for a in res2:
-        all_res.append(a[0])
+        all_res.append(a.resource_id)
 
     print('-------------**********------------',all_res)
 
