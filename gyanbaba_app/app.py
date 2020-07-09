@@ -139,70 +139,108 @@ def interactions():
     payload = json.loads(data['payload'])
     print("paload is ****", payload)
 
-    if payload['container']['message_ts'] in user_reacted:
-        if payload['user']['id'] not in user_reacted[payload['container']['message_ts']]:
+    if payload['type'] == 'view_submission':
+        text_req = len(payload['view']['blocks']) - 1
+        texts = payload['view']['state']['values']
+        
+        text_arr = []
+        for i in range(text_req):
+            text_arr.append(texts[str(i)][str(i)]['value'])
+
+        response = req_meme(text_arr, payload['view']['blocks'][-1]['alt_text'])
+
+        msg = slack_web_client.chat_postMessage(
+            channel=response['channel_id'],
+            blocks=response['response'],
+            user=response['user_id']
+        )
+        return {"response_action":"clear"}
+
+    if payload['actions'][0]['type'] == 'static_select':
+        user_id = payload['user']['id']
+        channel_id = payload['container']['channel_id']
+        meme_id = payload['actions'][0]['selected_option']['value']
+        response = fetchmeme(meme_id, user_id, channel_id)
+        slack_web_client.views_open(
+            trigger_id = payload['trigger_id'],
+            view = response,
+        )
+
+        
+
+        # slack_web_client.chat_delete(
+        #     channel = payload['channel']['id'],
+        #     ts = payload['container']['message_ts'],
+        #     as_user = True
+        # )
+            
+        return ""
+
+    else:
+        if payload['container']['message_ts'] in user_reacted:
+            if payload['user']['id'] not in user_reacted[payload['container']['message_ts']]:
+                user_reacted[payload['container']['message_ts']].append(payload['user']['id'])
+        else: 
+            user_reacted[payload['container']['message_ts']] = []
             user_reacted[payload['container']['message_ts']].append(payload['user']['id'])
-    else: 
-        user_reacted[payload['container']['message_ts']] = []
-        user_reacted[payload['container']['message_ts']].append(payload['user']['id'])
 
-    print("user reacted is ********", user_reacted)
+        print("user reacted is ********", user_reacted)
 
-    requests.post(
-        url = payload['response_url'], 
-        headers = {'Content-Type':'application/json'}, 
-        json = {"response_type" : "in_channel" }
-    )
-    
-    params = {
-        "user_id": payload['user']['id'],
-        "vote_name" : payload['actions'][0]['value'],
-        "channel_id" : payload['container']['channel_id']
-    }
+        requests.post(
+            url = payload['response_url'], 
+            headers = {'Content-Type':'application/json'}, 
+            json = {"response_type" : "in_channel" }
+        )
+        
+        params = {
+            "user_id": payload['user']['id'],
+            "vote_name" : payload['actions'][0]['value'],
+            "channel_id" : payload['container']['channel_id']
+        }
 
-    url = "http://127c11ade942.ngrok.io/slash/addvote/"+payload['actions'][0]['block_id']
+        url = "http://127c11ade942.ngrok.io/slash/addvote/"+payload['actions'][0]['block_id']
 
-    res = requests.post(url, json = params)
+        res = requests.post(url, json = params)
 
-    data = json.loads(res.text)
+        data = json.loads(res.text)
 
-    print("data response is ******", data)
+        print("data response is ******", data)
 
-    if(data['category_name'] == 'quote'):
-        pub_res = quote_block(payload['actions'][0]['block_id'], data, user_reacted, payload['container']['message_ts'])
-    elif(data['category_name'] == 'joke'):
-        pub_res = joke_block(payload['actions'][0]['block_id'], data, user_reacted, payload['container']['message_ts'])
-    elif(data['category_name'] == 'video'):
-        pub_res = video_block(payload['actions'][0]['block_id'], data, user_reacted, payload['container']['message_ts'])
+        if(data['category_name'] == 'quote'):
+            pub_res = quote_block(payload['actions'][0]['block_id'], data, user_reacted, payload['container']['message_ts'])
+        elif(data['category_name'] == 'joke'):
+            pub_res = joke_block(payload['actions'][0]['block_id'], data, user_reacted, payload['container']['message_ts'])
+        elif(data['category_name'] == 'video'):
+            pub_res = video_block(payload['actions'][0]['block_id'], data, user_reacted, payload['container']['message_ts'])
 
-    
+        
 
-    priv_res = [
-		{
-			"type": "section",
-			"text": {
-				"type": "plain_text",
-				"text": ":tada: :confetti_ball:  Thanks for your response  :tada: :confetti_ball:",
-				"emoji": True
-			}
-		}
-	]
+        priv_res = [
+            {
+                "type": "section",
+                "text": {
+                    "type": "plain_text",
+                    "text": ":tada: :confetti_ball:  Thanks for your response  :tada: :confetti_ball:",
+                    "emoji": True
+                }
+            }
+        ]
 
-    if(payload['container']['is_ephemeral'] == True and data['footprint'] == True):
-        update_mgs = slack_web_client.chat_postEphemeral(
-        channel = payload['channel']['id'],
-        user = payload['user']['id'],
-        blocks=priv_res
-    )
-    elif(payload['container']['is_ephemeral'] == False):
-        update_mgs = slack_web_client.chat_update(
-        channel = payload['channel']['id'],
-        ts = payload['container']['message_ts'],
-        as_user = 'true',
-        blocks=pub_res
-    )
+        if(payload['container']['is_ephemeral'] == True and data['footprint'] == True):
+            update_mgs = slack_web_client.chat_postEphemeral(
+            channel = payload['channel']['id'],
+            user = payload['user']['id'],
+            blocks=priv_res
+        )
+        elif(payload['container']['is_ephemeral'] == False):
+            update_mgs = slack_web_client.chat_update(
+            channel = payload['channel']['id'],
+            ts = payload['container']['message_ts'],
+            as_user = 'true',
+            blocks=pub_res
+        )
 
-    return ""
+        return ""
 
 @app.route('/help', methods= ['POST','GET'])
 def slash_help():
@@ -235,9 +273,6 @@ def slash_help():
 def slash_meme():
     data = request.form.to_dict()
 
-    inputs = data['text'].split(" ")
-    text0, text1 = inputs[0], inputs[1]
-
     body = {
         "text" : "Fetching content"
     }
@@ -248,7 +283,7 @@ def slash_meme():
         data = json.dumps(body)
     )
 
-    res = getmeme(text0, text1)
+    res = getmeme()
 
 
     if(data['text'] == 'publicly'):

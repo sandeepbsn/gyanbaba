@@ -363,22 +363,168 @@ def gethelp():
     return response
 
 
-def getmeme(text0, text1):
-    link = "https://api.imgflip.com/caption_image"
+def getmeme():
+    # link = "https://api.imgflip.com/caption_image"
 
-    templates = ['101287', '102156234', '89370399']
-
-    n = random.randint(0,len(templates) - 1)
-    
-    params = {
-        "template_id" : templates[n],
-        "username":"gyanbaba20",
-        "password":"baba2020",
-        "text0":text0,
-        "text1":text1,
+    templates = {
+        "distracted_boyfriend": "112126428",
+        "two_buttons": "87743020",
+        "expandingbrain": "93895088"
     }
 
-    res = requests.post(url = link, params = params)
+    # n = random.randint(0,len(templates) - 1)
+    
+    # params = {
+    #     "template_id" : templates[n],
+    #     "username":"gyanbaba20",
+    #     "password":"baba2020",
+    #     "text0":text0,
+    #     "text1":text1,
+    # }
+
+    # res = requests.post(url = link, params = params)
+
+    # data = json.loads(res.text)
+    # print("imaga data os ******", data)
+    # response = [
+	# 	{
+	# 		"type": "image",
+	# 		"image_url": data['data']['url'],
+	# 		"alt_text": "inspiration"
+	# 	}
+	# ]
+    option_block = []
+    for keys in templates:
+        option = {
+            "text": {
+                "type": "plain_text",
+                "text": keys,
+                "emoji": True
+            },
+            "value": templates[keys]
+        }
+        option_block.append(option)
+
+
+    response = [
+        {
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": "Pick an item from the dropdown list"
+			},
+			"accessory": {
+				"type": "static_select",
+				"placeholder": {
+					"type": "plain_text",
+					"text": "Select an item",
+					"emoji": True
+				},
+				"options": option_block
+			}
+		}
+	]
+    
+
+    return response
+
+
+def fetchmeme(meme_id, user_id, channel_id):
+
+    templates = {
+        "112126428": ['distracted_boyfriend', '3', 'https://i.kym-cdn.com/photos/images/newsfeed/001/287/547/e06.jpg'],
+        "87743020": ['two_buttons', '2', 'https://i.imgflip.com/2aux46.jpg'],
+        "93895088":['expanding brain', '4', 'https://66.media.tumblr.com/668f8fa044b09642396ee8be9846b449/tumblr_olspqaVPMy1u9ru6ro1_1280.png']
+    }
+    name_required = templates[meme_id][0]
+    text_required = int(templates[meme_id][1])
+    img_url = templates[meme_id][2]
+
+    array_one = []
+    for i in range(text_required):
+        array_one.append(
+            {
+                "type": "input",
+                "block_id":str(i),
+                "element": {
+                    "type": "plain_text_input",
+                    "action_id":str(i)
+                },
+                "label": {
+                    "type": "plain_text",
+                    "text": "Text "+str(i+1),
+                    "emoji": True
+                }
+            },
+        )
+
+    array_one.append(
+        {
+            "type": "image",
+            "image_url": img_url,
+            "alt_text": meme_id + " " + user_id + " " + channel_id
+        }
+    )
+        
+
+    response = {
+        "type": "modal",
+        "title": {
+            "type": "plain_text",
+            "text": "My App",
+            "emoji": True
+        },
+        "submit": {
+            "type": "plain_text",
+            "text": "Submit",
+            "emoji": True
+        },
+        "close": {
+            "type": "plain_text",
+            "text": "Cancel",
+            "emoji": True
+        },
+        "blocks": array_one
+    }
+
+    return response
+
+
+def req_meme(text_array, ids):
+    link = "https://api.imgflip.com/caption_image"
+
+    id_array = ids.split()
+
+    if len(text_array) == 2:
+        params = {
+            "template_id" : id_array[0],
+            "username":"gyanbaba20",
+            "password":"baba2020",
+            "boxes[0][text]": text_array[0],
+            "boxes[1][text]": text_array[1],
+        }
+    elif len(text_array) == 3:
+        params = {
+            "template_id" : id_array[0],
+            "username":"gyanbaba20",
+            "password":"baba2020",
+            "boxes[0][text]": text_array[0],
+            "boxes[1][text]": text_array[1],
+            "boxes[2][text]": text_array[2],
+        }
+    elif len(text_array) == 4:
+        params = {
+            "template_id" : id_array[0],
+            "username":"gyanbaba20",
+            "password":"baba2020",
+            "boxes[0][text]": text_array[0],
+            "boxes[1][text]": text_array[1],
+            "boxes[2][text]": text_array[2],
+            "boxes[3][text]": text_array[3],
+        }
+    
+
+    res = requests.get(url = link, params = params)
 
     data = json.loads(res.text)
     print("imaga data os ******", data)
@@ -390,7 +536,11 @@ def getmeme(text0, text1):
 		}
 	]
 
-    return response
+    return {
+        "response": response,
+        "user_id": id_array[1],
+        "channel_id": id_array[2]
+    }
 
 
     
