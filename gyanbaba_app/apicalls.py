@@ -3,7 +3,16 @@ import random
 import json  
 
 
-url = "http://127c11ade942.ngrok.io"
+url = "https://2870246242a2.ngrok.io"
+
+mem = requests.get(url+"/slash/getallmeme")
+
+all_memes = mem.json()
+
+meme_details = {}
+
+for meme in all_memes:
+    meme_details[meme['id']] = [meme['name'], meme['box_count'], meme['url']]
 
 
 #function to fetch jokes from slash command(/joke)
@@ -364,44 +373,15 @@ def gethelp():
 
 
 def getmeme():
-    # link = "https://api.imgflip.com/caption_image"
-
-    templates = {
-        "distracted_boyfriend": "112126428",
-        "two_buttons": "87743020",
-        "expandingbrain": "93895088"
-    }
-
-    # n = random.randint(0,len(templates) - 1)
-    
-    # params = {
-    #     "template_id" : templates[n],
-    #     "username":"gyanbaba20",
-    #     "password":"baba2020",
-    #     "text0":text0,
-    #     "text1":text1,
-    # }
-
-    # res = requests.post(url = link, params = params)
-
-    # data = json.loads(res.text)
-    # print("imaga data os ******", data)
-    # response = [
-	# 	{
-	# 		"type": "image",
-	# 		"image_url": data['data']['url'],
-	# 		"alt_text": "inspiration"
-	# 	}
-	# ]
     option_block = []
-    for keys in templates:
+    for keys in meme_details:
         option = {
             "text": {
                 "type": "plain_text",
-                "text": keys,
+                "text": meme_details[keys][0],
                 "emoji": True
             },
-            "value": templates[keys]
+            "value": keys
         }
         option_block.append(option)
 
@@ -431,14 +411,14 @@ def getmeme():
 
 def fetchmeme(meme_id, user_id, channel_id):
 
-    templates = {
-        "112126428": ['distracted_boyfriend', '3', 'https://i.kym-cdn.com/photos/images/newsfeed/001/287/547/e06.jpg'],
-        "87743020": ['two_buttons', '2', 'https://i.imgflip.com/2aux46.jpg'],
-        "93895088":['expanding brain', '4', 'https://66.media.tumblr.com/668f8fa044b09642396ee8be9846b449/tumblr_olspqaVPMy1u9ru6ro1_1280.png']
-    }
-    name_required = templates[meme_id][0]
-    text_required = int(templates[meme_id][1])
-    img_url = templates[meme_id][2]
+    # templates = {
+    #     "112126428": ['distracted_boyfriend', '3', 'https://i.kym-cdn.com/photos/images/newsfeed/001/287/547/e06.jpg'],
+    #     "87743020": ['two_buttons', '2', 'https://i.imgflip.com/2aux46.jpg'],
+    #     "93895088":['expanding brain', '4', 'https://66.media.tumblr.com/668f8fa044b09642396ee8be9846b449/tumblr_olspqaVPMy1u9ru6ro1_1280.png']
+    # }
+
+    text_required = int(meme_details[meme_id][1])
+    img_url = meme_details[meme_id][2]
 
     array_one = []
     for i in range(text_required):
@@ -495,7 +475,14 @@ def req_meme(text_array, ids):
 
     id_array = ids.split()
 
-    if len(text_array) == 2:
+    if len(text_array) == 1:
+        params = {
+            "template_id" : id_array[0],
+            "username":"gyanbaba20",
+            "password":"baba2020",
+            "boxes[0][text]": text_array[0],
+        }
+    elif len(text_array) == 2:
         params = {
             "template_id" : id_array[0],
             "username":"gyanbaba20",
@@ -521,6 +508,17 @@ def req_meme(text_array, ids):
             "boxes[1][text]": text_array[1],
             "boxes[2][text]": text_array[2],
             "boxes[3][text]": text_array[3],
+        }
+    elif len(text_array) == 5:
+        params = {
+            "template_id" : id_array[0],
+            "username":"gyanbaba20",
+            "password":"baba2020",
+            "boxes[0][text]": text_array[0],
+            "boxes[1][text]": text_array[1],
+            "boxes[2][text]": text_array[2],
+            "boxes[3][text]": text_array[3],
+            "boxes[4][text]": text_array[4],
         }
     
 
@@ -549,36 +547,6 @@ def req_meme(text_array, ids):
     
     
 
-
-
-    # [
-	# 	{
-	# 		"type": "context",
-	# 		"elements": [
-	# 			{
-	# 				"type": "plain_text",
-	# 				"text": vid['snippet']['title'],
-	# 				"emoji": true
-	# 			}
-	# 		]
-	# 	},
-	# 	{
-	# 		"type": "context",
-	# 		"elements": [
-	# 			{
-	# 				"type": "image",
-	# 				"image_url": "https://cdn.pixabay.com/photo/2016/07/03/18/36/youtube-1495277_960_720.png",
-	# 				"alt_text": "cute cat"
-	# 			},
-    #             {
-	# 				"type": "mrkdwn",
-	# 				"text": payload['video_url']
-	# 			}				
-	# 		]
-	# 	}
-	# ]
-    
-    
 
 
 

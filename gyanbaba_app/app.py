@@ -161,19 +161,11 @@ def interactions():
         channel_id = payload['container']['channel_id']
         meme_id = payload['actions'][0]['selected_option']['value']
         response = fetchmeme(meme_id, user_id, channel_id)
+
         slack_web_client.views_open(
             trigger_id = payload['trigger_id'],
             view = response,
         )
-
-        
-
-        # slack_web_client.chat_delete(
-        #     channel = payload['channel']['id'],
-        #     ts = payload['container']['message_ts'],
-        #     as_user = True
-        # )
-            
         return ""
 
     else:
@@ -198,7 +190,7 @@ def interactions():
             "channel_id" : payload['container']['channel_id']
         }
 
-        url = "http://127c11ade942.ngrok.io/slash/addvote/"+payload['actions'][0]['block_id']
+        url = "https://2870246242a2.ngrok.io/slash/addvote/"+payload['actions'][0]['block_id']
 
         res = requests.post(url, json = params)
 
@@ -286,14 +278,7 @@ def slash_meme():
     res = getmeme()
 
 
-    if(data['text'] == 'publicly'):
-        response = slack_web_client.chat_postMessage(
-        channel=data['channel_id'],
-        blocks=res,
-        user=data['user_id']
-    )
-    else:
-        response = slack_web_client.chat_postEphemeral(
+    response = slack_web_client.chat_postEphemeral(
         channel=data['channel_id'],
         blocks=res,
         user=data['user_id']
