@@ -1,7 +1,8 @@
 from ..services.joke import get_joke
 from ..services.quote import get_quote
+from ..services.meme import get_all_meme
 from ..services.video import get_video
-from ..services.resource import load_data,add_vote
+from ..services.resource import load_data,add_vote,load_meme_from_api
 from ..services.user import load_user
 from ..services.test import get_test
 import json
@@ -30,6 +31,17 @@ def g_joke():
     return json.dumps(joke['payload'][0])
     # print('**********************',joke[0][1])
 
+
+@slash.route('/getallmeme')
+def g_meme():
+    # channel_id
+    
+    meme=get_all_meme()
+    # print('in slash route',quote['payload'])
+
+    # return json.dumps({'joke':[dict(row) for row in obj_joke]})
+    return json.dumps(meme['payload'])
+    # print('**********************',joke[0][1])
 
 
 
@@ -92,9 +104,5 @@ def g_load():
 @slash.route('/test')
 def g_test():
     # channel_id=request.json['channel_id']
-    channel_id="X12KS"
-    test=get_test(channel_id)
-    # print('in slash route',quote['payload'])
-
-    # return json.dumps({'joke':[dict(row) for row in obj_joke]})
-    return json.dumps(test['payload'][0])
+    d=load_meme_from_api()
+    return json.dumps(d)
