@@ -2,8 +2,7 @@ import requests
 import random 
 import json  
 
-
-try:
+def load_meme():
     url = "http://gyanbaba-api.abhisheksaklani.co"
 
     mem = requests.get(url+"/slash/getallmeme")
@@ -11,12 +10,11 @@ try:
     all_memes = mem.json()
 
     meme_details = {}
-except:
-    return "memes not loaded"
 
-for meme in all_memes:
-    meme_details[meme['id']] = [meme['name'], meme['box_count'], meme['url']]
+    for meme in all_memes:
+        meme_details[meme['id']] = [meme['name'], meme['box_count'], meme['url']]
 
+    return meme_details
 
 #function to fetch jokes from slash command(/joke)
 def getjoke(channel_id, command_text):
@@ -377,6 +375,7 @@ def gethelp():
 
 def getmeme():
     option_block = []
+    meme_details = load_meme()
     for keys in meme_details:
         option = {
             "text": {
@@ -419,6 +418,7 @@ def fetchmeme(meme_id, user_id, channel_id):
     #     "87743020": ['two_buttons', '2', 'https://i.imgflip.com/2aux46.jpg'],
     #     "93895088":['expanding brain', '4', 'https://66.media.tumblr.com/668f8fa044b09642396ee8be9846b449/tumblr_olspqaVPMy1u9ru6ro1_1280.png']
     # }
+    meme_details = load_meme()
 
     text_required = int(meme_details[meme_id][1])
     img_url = meme_details[meme_id][2]

@@ -23,6 +23,9 @@ onboarding_tutorials_sent = {}
 
 user_reacted = {}
 
+@app.route('/',methods=['POST','GET'])
+def home22():
+    return 'front home'
 
 @app.route('/quote', methods= ['POST','GET'])
 def slash_quote():
