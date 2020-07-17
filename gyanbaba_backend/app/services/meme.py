@@ -25,11 +25,11 @@ def get_all_meme():
     
     for d in res2:
         # temp_dict={}
-        print('*********DATA MEME',d.payload)
+        #print('*********DATA MEME',d.payload)
         # temp_dict['payload']=d.payload
         data2.append(d.payload)
         
-
+    print('getting meme data from backend')
     
     return {"payload":data2}
     

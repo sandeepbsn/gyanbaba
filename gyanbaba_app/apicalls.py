@@ -3,13 +3,16 @@ import random
 import json  
 
 
-url = "https://2870246242a2.ngrok.io"
+try:
+    url = "http://gyanbaba-api.abhisheksaklani.co"
 
-mem = requests.get(url+"/slash/getallmeme")
+    mem = requests.get(url+"/slash/getallmeme")
 
-all_memes = mem.json()
+    all_memes = mem.json()
 
-meme_details = {}
+    meme_details = {}
+except:
+    return "memes not loaded"
 
 for meme in all_memes:
     meme_details[meme['id']] = [meme['name'], meme['box_count'], meme['url']]
@@ -525,7 +528,7 @@ def req_meme(text_array, ids):
     res = requests.get(url = link, params = params)
 
     data = json.loads(res.text)
-    print("imaga data os ******", data)
+    #print("imaga data os ******", data)
     response = [
 		{
 			"type": "image",

@@ -9,7 +9,7 @@ from .routes import slash as slash_blueprint
 # db=SQLAlchemy()
 
 
-def create_app(config_name):
+def create_app(config_name='development'):
     app=Flask(__name__,instance_relative_config=True)
     app.config.from_object(app_config[config_name])
     app.config.from_pyfile('config.py')
