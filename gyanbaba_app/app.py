@@ -5,7 +5,7 @@ from flask import request
 from slack import WebClient
 from slackeventsapi import SlackEventAdapter
 import json
-from onboarding import OnboardingTutorial
+# from onboarding import OnboardingTutorial
 from apicalls import *
 from getblocks import *
 from urllib.parse import urlparse, parse_qs
@@ -14,10 +14,10 @@ from threading import Timer
 
 
 app = Flask(__name__)
-slack_events_adapter = SlackEventAdapter(os.environ['SLACK_SIGNING_SECRET'], "/slack/events", app)
+slack_events_adapter = SlackEventAdapter('2d7840bd54b298a8b1a89d4ecdcb0456', "/slack/events", app)
 
 # Initialize a Web API client
-slack_web_client = WebClient(token=os.environ['SLACK_BOT_TOKEN'])
+slack_web_client = WebClient(token='xoxb-1204196757331-1212152498052-9VasQyLSUp061IiwFF4iL0tw')
 
 onboarding_tutorials_sent = {}
 
@@ -137,7 +137,7 @@ def interactions():
 
     data = request.form.to_dict()
     payload = json.loads(data['payload'])
-    print("paload is ****", payload)
+    #print("paload is ****", payload)
 
     if payload['type'] == 'view_submission':
         text_req = len(payload['view']['blocks']) - 1
@@ -176,7 +176,7 @@ def interactions():
             user_reacted[payload['container']['message_ts']] = []
             user_reacted[payload['container']['message_ts']].append(payload['user']['id'])
 
-        print("user reacted is ********", user_reacted)
+        #print("user reacted is ********", user_reacted)
 
         requests.post(
             url = payload['response_url'], 
@@ -190,13 +190,13 @@ def interactions():
             "channel_id" : payload['container']['channel_id']
         }
 
-        url = "https://2870246242a2.ngrok.io/slash/addvote/"+payload['actions'][0]['block_id']
+        url = "http://gyanbaba-api.abhisheksaklani.co/slash/addvote/"+payload['actions'][0]['block_id']
 
         res = requests.post(url, json = params)
 
         data = json.loads(res.text)
 
-        print("data response is ******", data)
+        #print("data response is ******", data)
 
         if(data['category_name'] == 'quote'):
             pub_res = quote_block(payload['actions'][0]['block_id'], data, user_reacted, payload['container']['message_ts'])

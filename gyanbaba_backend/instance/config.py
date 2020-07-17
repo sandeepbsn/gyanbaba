@@ -1,1 +1,1 @@
-SQLALCHEMY_DATABASE_URI='mysql+pymysql://root:rootpass@localhost/bot_db'
+SQLALCHEMY_DATABASE_URI='mysql://admin:rootpass@localhost/bot_db'
