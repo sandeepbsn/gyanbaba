@@ -3,16 +3,20 @@ import random
 import json  
 
 
-url = "https://2870246242a2.ngrok.io"
+try:
+    url = "https://2870246242a2.ngrok.io"
 
-mem = requests.get(url+"/slash/getallmeme")
+    mem = requests.get(url+"/slash/getallmeme")
 
-all_memes = mem.json()
+    all_memes = mem.json()
 
-meme_details = {}
+    meme_details = {}
 
-for meme in all_memes:
-    meme_details[meme['id']] = [meme['name'], meme['box_count'], meme['url']]
+    for meme in all_memes:
+        meme_details[meme['id']] = [meme['name'], meme['box_count'], meme['url']]
+
+except:
+    print("Memes already loaded")
 
 
 #function to fetch jokes from slash command(/joke)

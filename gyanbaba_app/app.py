@@ -1,11 +1,11 @@
 import os
-import logging
+# import logging
 from flask import Flask
 from flask import request
 from slack import WebClient
 from slackeventsapi import SlackEventAdapter
 import json
-from onboarding import OnboardingTutorial
+# from onboarding import OnboardingTutorial
 from apicalls import *
 from getblocks import *
 from urllib.parse import urlparse, parse_qs
@@ -285,6 +285,40 @@ def slash_meme():
     )
 
     return ""
+
+
+
+def test():
+    response = [
+            {
+                "type": "context",
+                "elements": [
+                    {
+                        "type": "image",
+                        "image_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcSICPv2MB4cg-5-iBDaIUchCuFZrUoJSSAfXw&usqp=CAU",
+                        "alt_text": "cute cat"
+                    },
+                    {
+                        "type": "mrkdwn",
+                        "text": "testing one"
+                    }
+                ]
+            }
+	    ]
+
+    res = slack_web_client.chat_postMessage(
+        channel="C015ZV2BXQS",
+        blocks=response,
+        user="U015YHXR4LD"
+    )
+
+
+    return ""
+
+    
+
+
+
 
 
     
