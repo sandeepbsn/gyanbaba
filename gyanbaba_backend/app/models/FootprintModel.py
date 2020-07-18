@@ -9,3 +9,4 @@ class Footprint(db.Model):
     user_id=db.Column(db.String(100))
     up_votes=db.Column(db.Integer,default=0)
     down_votes=db.Column(db.Integer,default=0)
+    timestamp = db.Column(db.DateTime)

@@ -4,6 +4,7 @@ from ..models.CategoryModel import Category
 from ..models.FootprintModel import Footprint 
 from  sqlalchemy.sql.expression import func
 import random
+import datetime
 
 
 def get_all_meme():
