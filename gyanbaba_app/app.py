@@ -1,8 +1,11 @@
 import os
 # import logging
 from apscheduler.schedulers.background import BackgroundScheduler
+# from pytz import timezone
+# from tzlocal import get_localzone
 from datetime import datetime
-from sheduler import modal_response
+from sheduler import modal_pin
+from sheduler import modal_scheduler
 from flask import Flask
 from flask import make_response
 from flask import request
@@ -29,12 +32,15 @@ user_reacted = {}
 
 schedule_response = {}
 
+pin_channel = {}
+
 @app.route('/',methods=['POST','GET'])
 def home22():
     return 'front home'
 
 
 scheduler = BackgroundScheduler()
+scheduler.add_jobstore('sqlalchemy', url='mysql://root:Password_123@localhost/schedule')
 
 scheduler.start()
 
@@ -49,7 +55,7 @@ def schedule_to_print(data):
     #schedule the method 'printing_something' to run the the given 'date_time' with the args 'text'
     
     job = scheduler.add_job(printing_something, trigger='cron', next_run_time=str(date_time),
-                            args=[text, channels], hour=data['hours'], minute=data['minutes'],second=data['seconds'],month='*')
+                            args=[text, channels], hour=data['hours'], minute=data['minutes'],second=data['seconds'],month='*', coalesce=False, max_instances=1)
 
     return "job details: %s" % job
 
@@ -59,6 +65,7 @@ def printing_something(text,channels):
     print(scheduler.get_jobs())
     
     for channel in channels:
+        print("coutn*****", channel)
         params = {
             "token":"xoxb-1204196757331-1212152498052-9VasQyLSUp061IiwFF4iL0tw",
             "channel": channel,
@@ -66,6 +73,8 @@ def printing_something(text,channels):
         }
 
         requests.post('https://slack.com/api/chat.postMessage', data = params)
+
+    return ""
 
 @app.route('/test', methods = ['POST', 'GET'])
 def test_sched():
@@ -81,9 +90,10 @@ def test_sched():
         data = json.dumps(body)
     )
 
+    view_res = modal_scheduler()
     slack_web_client.views_open(
         trigger_id = data['trigger_id'],
-        view = modal_response,
+        view = view_res
     )
     return ""
 
@@ -96,8 +106,98 @@ def test_sched():
 
     # return ""
 
+# @app.route('/slashpin', methods = ['POST', 'GET'])
+def slashpin(channel_id, user_id):
+    # response = slack_web_client.conversations_list()
+    # conversations = response["channels"]
+    pins = []
+    blocks = []
+
+    # for channel in conversations:
+    #     link = "https://slack.com/api/pins.list?token=xoxp-1204196757331-1202609854693-1207565989093-4acf2cc88a01f10c5d032af2c65e345f&channel=%s&pretty=1"%(channel['id'])
+    #     r = requests.get(url = link)
+
+    #     data = r.json()
+
+    #     pins.append(data)
+
+    link = "https://slack.com/api/pins.list?token=xoxp-1204196757331-1202609854693-1207565989093-4acf2cc88a01f10c5d032af2c65e345f&channel=%s&pretty=1"%(channel_id)
+
+    r = requests.get(url = link)
+
+    data = r.json()
+
+    pins.append(data)
+
+    print("pins**********", pins)
+
+    pin_items = pins[0]['items']
+    for pin in pin_items:
+        message = pin['message']['text']
+        perma_link = pin['message']['permalink']
+        blocks.append(
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": message,
+                }
+            },
+        )
+        blocks.append(
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": "<"+perma_link+"|View message>"
+                }
+            }
+        )
+        # blocks.append((message,perma_link))
+
+    # print("blocks **********",blocks)
+    # res_url = request.form.to_dict()
+
+    # body = {
+    #     "text" : "Fetching content"
+    # }
+    
+    # requests.post(
+    #     url = res_url['response_url'], 
+    #     headers = {'Content-Type':'application/json'}, 
+    #     data = json.dumps(body)
+    # )
+
+    response = slack_web_client.chat_postMessage(
+        channel=channel_id,
+        blocks=blocks,
+        user=user_id
+    )
+
+    return ""
 
 
+@app.route('/pin', methods = ['POST', 'GET'])
+def pins():
+    data = request.form.to_dict()
+
+
+    body = {
+        "text" : "Fetching content"
+    }
+    
+    requests.post(
+        url = data['response_url'], 
+        headers = {'Content-Type':'application/json'}, 
+        data = json.dumps(body)
+    )
+    pin_res = modal_pin()
+    slack_web_client.views_open(
+        trigger_id = data['trigger_id'],
+        view = pin_res,
+    )
+
+    return ""  
 
 @app.route('/quote', methods= ['POST','GET'])
 def slash_quote():
@@ -188,7 +288,8 @@ def slash_video():
         channel=data['channel_id'],
         # token = 'xoxp-1204196757331-1202609854693-1207565989093-4acf2cc88a01f10c5d032af2c65e345f',
         as_user = True,
-        blocks=res,
+        # blocks=res,
+        text=res,
         unfurl_links = True,
         unfurl_media = True,
         user=data['user_id']
@@ -196,7 +297,8 @@ def slash_video():
     else:
         response = slack_web_client.chat_postEphemeral(
         channel=data['channel_id'],
-        blocks=res,
+        # blocks=res,
+        text=res,
         unfurl_links = True,
         unfurl_media = True,
         user=data['user_id']
@@ -215,7 +317,30 @@ def interactions():
     payload = json.loads(data['payload'])
     #print("paload is ****", payload)
 
-    if payload['type'] == 'block_actions' and payload['view']['blocks'][0]['block_id'] == 'message':
+    if payload['type'] == 'block_actions' and payload.get('view')!= None and payload['view']['blocks'][1]['block_id'] == 'pin_channels':
+        view_id = payload['view']['id']
+        if pin_channel.get(view_id) == None:
+            pin_channel[view_id] = {}
+            block_id = payload['actions'][0]['block_id']
+
+            value = payload['actions'][0]['selected_channel']
+
+            pin_channel[view_id][block_id] = value
+            pin_channel[view_id]['user_id'] = payload['user']['id']
+
+        return ""
+
+    if payload['type'] == 'view_submission' and payload.get('view') != None and payload['view']['blocks'][1]['block_id'] == 'pin_channels':
+        print("pin******", pin_channel)
+        view_id = payload['view']['id']
+        channel_id = pin_channel[view_id]['pin_channels']
+        user_id = pin_channel[view_id]['user_id']
+        slashpin(channel_id, user_id)
+
+        return ""
+
+
+    if payload['type'] == 'block_actions' and payload.get('view') != None and payload['view']['blocks'][0]['block_id'] == 'message':
         view_id = payload['view']['id']
         if schedule_response.get(view_id) == None:
             schedule_response[view_id] = {}
@@ -226,10 +351,7 @@ def interactions():
                 value = '/'.join(cur_date)
             elif block_id == 'hours' or block_id == 'minutes':
                 value = payload['actions'][0]['selected_option']['value']
-            # elif block_id == 'channels':
-            #     value = payload['actions'][0]['selected_channel']
-            elif block_id == 'users':
-                value = payload['actions'][0]['selected_user']
+
 
             schedule_response[view_id][block_id] = value
         else:
@@ -249,11 +371,26 @@ def interactions():
 
         return ""
 
-    if payload['type'] == 'view_submission' and payload['view']['blocks'][0]['block_id'] == 'message':
+    if payload['type'] == 'view_submission' and payload.get('view') != None and payload['view']['blocks'][0]['block_id'] == 'message':
         text = payload['view']['state']['values']['message']['text']['value']
         channels = payload['view']['state']['values']['channels']['name']['selected_channels']
         
         view_id = payload['view']['id']
+        # if schedule_response.get(view_id) == None:
+        #     schedule_response[view_id] = {}
+
+        if view_id not in schedule_response:
+            return {"response_action":"clear"}            
+
+        if schedule_response[view_id].get('hours') == None or schedule_response[view_id].get('minutes') == None:
+            return {"response_action":"clear"}            
+
+        if schedule_response[view_id].get('date_sched') == None:
+            schedule_response[view_id]['date_sched'] = datetime.now().date().strftime('%d/%m/%Y')
+
+        if schedule_response[view_id].get('date_end') == None:
+            schedule_response[view_id]['date_end'] = datetime.now().date().strftime('%d/%m/%Y')
+
 
         schedule_response[view_id]['seconds'] = '00'
         schedule_response[view_id]['text'] = text
@@ -268,7 +405,7 @@ def interactions():
         print("response*************", schedule_response)
         return {"response_action":"clear"}
 
-    if payload['type'] == 'view_submission' and payload['view']['blocks'][0]['block_id'] == '0':
+    if payload['type'] == 'view_submission' and payload.get('view') != None and payload['view']['blocks'][0]['block_id'] == '0':
         text_req = len(payload['view']['blocks']) - 1
         texts = payload['view']['state']['values']
         
