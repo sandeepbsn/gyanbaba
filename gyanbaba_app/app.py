@@ -1,6 +1,10 @@
 import os
-import logging
+# import logging
+from apscheduler.schedulers.background import BackgroundScheduler
+from datetime import datetime
+from sheduler import modal_response
 from flask import Flask
+from flask import make_response
 from flask import request
 from slack import WebClient
 from slackeventsapi import SlackEventAdapter
@@ -23,9 +27,77 @@ onboarding_tutorials_sent = {}
 
 user_reacted = {}
 
+schedule_response = {}
+
 @app.route('/',methods=['POST','GET'])
 def home22():
     return 'front home'
+
+
+scheduler = BackgroundScheduler()
+
+scheduler.start()
+
+
+def schedule_to_print(data):
+    #get time to schedule and text to print from the json
+    time = data.get('date_time')
+    text = data.get('text')
+    channels = data.get('channels')
+    #convert to datetime
+    date_time = datetime.strptime(time, "%d/%m/%Y %H:%M:%S")
+    #schedule the method 'printing_something' to run the the given 'date_time' with the args 'text'
+    
+    job = scheduler.add_job(printing_something, trigger='cron', next_run_time=str(date_time),
+                            args=[text, channels], hour=data['hours'], minute=data['minutes'],second=data['seconds'],month='*')
+
+    return "job details: %s" % job
+
+
+def printing_something(text,channels):
+    print("printing %s at %s" % (text, datetime.now()))
+    print(scheduler.get_jobs())
+    
+    for channel in channels:
+        params = {
+            "token":"xoxb-1204196757331-1212152498052-9VasQyLSUp061IiwFF4iL0tw",
+            "channel": channel,
+            "text":text,
+        }
+
+        requests.post('https://slack.com/api/chat.postMessage', data = params)
+
+@app.route('/test', methods = ['POST', 'GET'])
+def test_sched():
+    data = request.form.to_dict()
+
+    body = {
+        "text" : "Fetching content"
+    }
+    
+    requests.post(
+        url = data['response_url'], 
+        headers = {'Content-Type':'application/json'}, 
+        data = json.dumps(body)
+    )
+
+    slack_web_client.views_open(
+        trigger_id = data['trigger_id'],
+        view = modal_response,
+    )
+    return ""
+
+
+    # response = slack_web_client.chat_postEphemeral(
+    #     channel=data['channel_id'],
+    #     blocks=res,
+    #     user=data['user_id']
+    # )
+
+    # return ""
+
+
+
 
 @app.route('/quote', methods= ['POST','GET'])
 def slash_quote():
@@ -137,12 +209,66 @@ def slash_video():
 
 @app.route('/interactions', methods = ['POST'])
 def interactions():
+    make_response('HTTP 200 OK',200)
 
     data = request.form.to_dict()
     payload = json.loads(data['payload'])
     #print("paload is ****", payload)
 
-    if payload['type'] == 'view_submission':
+    if payload['type'] == 'block_actions' and payload['view']['blocks'][0]['block_id'] == 'message':
+        view_id = payload['view']['id']
+        if schedule_response.get(view_id) == None:
+            schedule_response[view_id] = {}
+            block_id = payload['actions'][0]['block_id']
+
+            if block_id == 'date_sched' or 'date_end':
+                cur_date = list(payload['actions'][0]['selected_date'].split('-'))[::-1]
+                value = '/'.join(cur_date)
+            elif block_id == 'hours' or block_id == 'minutes':
+                value = payload['actions'][0]['selected_option']['value']
+            # elif block_id == 'channels':
+            #     value = payload['actions'][0]['selected_channel']
+            elif block_id == 'users':
+                value = payload['actions'][0]['selected_user']
+
+            schedule_response[view_id][block_id] = value
+        else:
+            block_id = payload['actions'][0]['block_id']
+
+            if block_id == 'date_sched' or block_id == 'date_end':
+                cur_date = list(payload['actions'][0]['selected_date'].split('-'))[::-1]
+                value = '/'.join(cur_date)
+            elif block_id == 'hours' or block_id == 'minutes':
+                value = payload['actions'][0]['selected_option']['value']
+            # elif block_id == 'channels':
+            #     value = payload['actions'][0]['selected_channel']
+            elif block_id == 'users':
+                value = payload['actions'][0]['selected_user']
+
+            schedule_response[view_id][block_id] = value
+
+        return ""
+
+    if payload['type'] == 'view_submission' and payload['view']['blocks'][0]['block_id'] == 'message':
+        text = payload['view']['state']['values']['message']['text']['value']
+        channels = payload['view']['state']['values']['channels']['name']['selected_channels']
+        
+        view_id = payload['view']['id']
+
+        schedule_response[view_id]['seconds'] = '00'
+        schedule_response[view_id]['text'] = text
+        schedule_response[view_id]['channels'] = channels
+
+        schedule_response[view_id]['time'] = schedule_response[view_id]['hours'] + ":" + schedule_response[view_id]['minutes'] + ":" + schedule_response[view_id]['seconds'] 
+
+        schedule_response[view_id]['date_time'] = schedule_response[view_id]['date_sched'] + " " + schedule_response[view_id]['time']
+
+        schedule_to_print(schedule_response[view_id])
+        
+        print("response*************", schedule_response)
+        return {"response_action":"clear"}
+
+    if payload['type'] == 'view_submission' and payload['view']['blocks'][0]['block_id'] == '0':
         text_req = len(payload['view']['blocks']) - 1
         texts = payload['view']['state']['values']
         
@@ -288,6 +414,15 @@ def slash_meme():
     )
 
     return ""
+
+
+
+
+
+    
+
+
+
 
 
     

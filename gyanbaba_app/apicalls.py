@@ -542,14 +542,3 @@ def req_meme(text_array, ids):
         "user_id": id_array[1],
         "channel_id": id_array[2]
     }
-
-
-    
-
-        
-    
-    
-
-
-
-
