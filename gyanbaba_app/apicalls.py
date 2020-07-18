@@ -2,9 +2,9 @@ import requests
 import random 
 import json  
 
-def load_meme():
-    url = "http://gyanbaba-api.abhisheksaklani.co"
+url = "http://gyanbaba-api.abhisheksaklani.co"
 
+def load_meme():
     mem = requests.get(url+"/slash/getallmeme")
 
     all_memes = mem.json()
@@ -181,6 +181,16 @@ def getquote(channel_id, command_text):
             }
             
         ]
+        # response = [
+        #     {
+        #         "type": "section",
+        #         "text": {
+        #             "type": "plain_text",
+        #             "text": payload['text'],
+        #             "emoji": True
+        #         }
+        #     }
+        # ]
 
         return response
     else:
@@ -215,6 +225,8 @@ def getvideo(channel_id, command_text):
     r = requests.get(url = link, params = params)
 
     data = r.json()
+
+    return data['payload']['video_url']
 
     if(data['flag']):
         payload = data['payload']
@@ -454,7 +466,7 @@ def fetchmeme(meme_id, user_id, channel_id):
         "type": "modal",
         "title": {
             "type": "plain_text",
-            "text": "My App",
+            "text": "GyanBaba",
             "emoji": True
         },
         "submit": {
