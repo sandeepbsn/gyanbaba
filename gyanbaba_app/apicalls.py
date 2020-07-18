@@ -2,9 +2,8 @@ import requests
 import random 
 import json  
 
-
-try:
-    url = "https://2870246242a2.ngrok.io"
+def load_meme():
+    url = "http://gyanbaba-api.abhisheksaklani.co"
 
     mem = requests.get(url+"/slash/getallmeme")
 
@@ -15,9 +14,7 @@ try:
     for meme in all_memes:
         meme_details[meme['id']] = [meme['name'], meme['box_count'], meme['url']]
 
-except:
-    print("Memes already loaded")
-
+    return meme_details
 
 #function to fetch jokes from slash command(/joke)
 def getjoke(channel_id, command_text):
@@ -378,6 +375,7 @@ def gethelp():
 
 def getmeme():
     option_block = []
+    meme_details = load_meme()
     for keys in meme_details:
         option = {
             "text": {
@@ -420,6 +418,7 @@ def fetchmeme(meme_id, user_id, channel_id):
     #     "87743020": ['two_buttons', '2', 'https://i.imgflip.com/2aux46.jpg'],
     #     "93895088":['expanding brain', '4', 'https://66.media.tumblr.com/668f8fa044b09642396ee8be9846b449/tumblr_olspqaVPMy1u9ru6ro1_1280.png']
     # }
+    meme_details = load_meme()
 
     text_required = int(meme_details[meme_id][1])
     img_url = meme_details[meme_id][2]
@@ -529,7 +528,7 @@ def req_meme(text_array, ids):
     res = requests.get(url = link, params = params)
 
     data = json.loads(res.text)
-    print("imaga data os ******", data)
+    #print("imaga data os ******", data)
     response = [
 		{
 			"type": "image",
@@ -543,14 +542,3 @@ def req_meme(text_array, ids):
         "user_id": id_array[1],
         "channel_id": id_array[2]
     }
-
-
-    
-
-        
-    
-    
-
-
-
-

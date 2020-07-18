@@ -1,7 +1,8 @@
 from ..services.joke import get_joke
 from ..services.quote import get_quote
+from ..services.meme import get_all_meme
 from ..services.video import get_video
-from ..services.resource import load_data,add_vote
+from ..services.resource import load_data,add_vote,load_meme_from_api
 from ..services.user import load_user
 from ..services.test import get_test
 import json
@@ -22,7 +23,7 @@ def g_home():
 def g_joke():
     # channel_id
     channel_id=request.args['channel_id']
-    print('****(((((((******<<<<<<<<JOKE>>>>>>>>>>**********',channel_id)
+    #print('****(((((((******<<<<<<<<JOKE>>>>>>>>>>**********',channel_id)
     joke=get_joke(channel_id)
     # print('in slash route',quote['payload'])
 
@@ -31,15 +32,26 @@ def g_joke():
     # print('**********************',joke[0][1])
 
 
+@slash.route('/getallmeme')
+def g_meme():
+    # channel_id
+    
+    meme=get_all_meme()
+    # print('in slash route',quote['payload'])
+
+    # return json.dumps({'joke':[dict(row) for row in obj_joke]})
+    return json.dumps(meme['payload'])
+    # print('**********************',joke[0][1])
+
 
 
 @slash.route('/quote')
 def g_quote():
     channel_id=request.args['channel_id']
-    print('****(((((((******<<<<<<<<QUOTE>>>>>>>>>>**********',channel_id)
+    #print('****(((((((******<<<<<<<<QUOTE>>>>>>>>>>**********',channel_id)
     
     quote=get_quote(channel_id)
-    print('in slash route',quote['payload'])
+    #print('in slash route',quote['payload'])
 
     # return json.dumps({'joke':[dict(row) for row in obj_joke]})
     return json.dumps(quote['payload'][0])
@@ -54,13 +66,13 @@ def g_quote():
 @slash.route('/video')
 def g_video():
     channel_id=request.args['channel_id']
-    print('****(((((((******<<<<<<<<VIDEO>>>>>>>>>>**********',channel_id)
+    #print('****(((((((******<<<<<<<<VIDEO>>>>>>>>>>**********',channel_id)
     video=get_video(channel_id)
     # print('in slash route',quote['payload'])
 
     # return json.dumps({'joke':[dict(row) for row in obj_joke]})
     # return json.dumps(video['payload'])
-    print('**********************',video)
+    #print('**********************',video)
 
     return json.dumps(video['payload'][0])
 
@@ -92,9 +104,5 @@ def g_load():
 @slash.route('/test')
 def g_test():
     # channel_id=request.json['channel_id']
-    channel_id="X12KS"
-    test=get_test(channel_id)
-    # print('in slash route',quote['payload'])
-
-    # return json.dumps({'joke':[dict(row) for row in obj_joke]})
-    return json.dumps(test['payload'][0])
+    d=load_meme_from_api()
+    return json.dumps(d)

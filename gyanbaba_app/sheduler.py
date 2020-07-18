@@ -1,3 +1,40 @@
+hours = []
+    
+for i in range(0,24):
+	if i < 10:
+		text = "0"+str(i)
+	else:
+		text = str(i)
+
+	block = {
+		"text": {
+			"type": "plain_text",
+			"text": text,
+			"emoji": True
+		},
+		"value": text
+	}
+
+	hours.append(block)
+
+minutes = []
+
+for i in range(0,60):
+	if i < 10:
+		text = "0"+str(i)
+	else:
+		text = str(i)
+	block = {
+		"text": {
+			"type": "plain_text",
+			"text": text,
+			"emoji": True
+		},
+		"value": text
+	}
+
+	minutes.append(block)
+
 modal_response = {
 	"type": "modal",
 	"title": {
@@ -18,9 +55,11 @@ modal_response = {
 	"blocks": [
 		{
 			"type": "input",
+			"block_id": "message",
 			"element": {
 				"type": "plain_text_input",
-				"multiline": True
+				"multiline": True,
+				"action_id": "text"
 			},
 			"label": {
 				"type": "plain_text",
@@ -30,13 +69,14 @@ modal_response = {
 		},
 		{
 			"type": "section",
+			"block_id": "date_sched",
 			"text": {
 				"type": "mrkdwn",
 				"text": "Date to schedule"
 			},
 			"accessory": {
 				"type": "datepicker",
-				"initial_date": "1990-04-28",
+				"initial_date": "2020-07-18",
 				"placeholder": {
 					"type": "plain_text",
 					"text": "Select a date",
@@ -46,6 +86,7 @@ modal_response = {
 		},
 		{
 			"type": "section",
+			"block_id": "hours",
 			"text": {
 				"type": "mrkdwn",
 				"text": "Hours"
@@ -57,36 +98,12 @@ modal_response = {
 					"text": "Select hours",
 					"emoji": True
 				},
-				"options": [
-					{
-						"text": {
-							"type": "plain_text",
-							"text": "*this is plain_text text*",
-							"emoji": True
-						},
-						"value": "value-0"
-					},
-					{
-						"text": {
-							"type": "plain_text",
-							"text": "*this is plain_text text*",
-							"emoji": True
-						},
-						"value": "value-1"
-					},
-					{
-						"text": {
-							"type": "plain_text",
-							"text": "*this is plain_text text*",
-							"emoji": True
-						},
-						"value": "value-2"
-					}
-				]
+				"options": hours
 			}
 		},
 		{
 			"type": "section",
+			"block_id": "minutes",
 			"text": {
 				"type": "mrkdwn",
 				"text": "Minutes"
@@ -98,36 +115,12 @@ modal_response = {
 					"text": "Select Minutes",
 					"emoji": True
 				},
-				"options": [
-					{
-						"text": {
-							"type": "plain_text",
-							"text": "*this is plain_text text*",
-							"emoji": True
-						},
-						"value": "value-0"
-					},
-					{
-						"text": {
-							"type": "plain_text",
-							"text": "*this is plain_text text*",
-							"emoji": True
-						},
-						"value": "value-1"
-					},
-					{
-						"text": {
-							"type": "plain_text",
-							"text": "*this is plain_text text*",
-							"emoji": True
-						},
-						"value": "value-2"
-					}
-				]
+				"options": minutes
 			}
 		},
 		{
 			"type": "section",
+			"block_id": "repeat",
 			"text": {
 				"type": "mrkdwn",
 				"text": "Repeat"
@@ -169,13 +162,14 @@ modal_response = {
 		},
 		{
 			"type": "section",
+			"block_id": "date_end",
 			"text": {
 				"type": "mrkdwn",
 				"text": "Date to end scheduling"
 			},
 			"accessory": {
 				"type": "datepicker",
-				"initial_date": "1990-04-28",
+				"initial_date": "2020-07-18",
 				"placeholder": {
 					"type": "plain_text",
 					"text": "Select a date",
@@ -184,22 +178,26 @@ modal_response = {
 			}
 		},
 		{
-			"type": "section",
-			"text": {
-				"type": "mrkdwn",
-				"text": "Select channels (optional)"
-			},
-			"accessory": {
-				"type": "channels_select",
+			"type": "input",
+			"block_id":"channels",
+			"element": {
+				"type": "multi_channels_select",
+				"action_id": "name",
 				"placeholder": {
 					"type": "plain_text",
-					"text": "Select a channels",
+					"text": "Select channels",
 					"emoji": True
 				}
+			},
+			"label": {
+				"type": "plain_text",
+				"text": "Channels",
+				"emoji": True
 			}
 		},
 		{
 			"type": "section",
+			"block_id": "users",
 			"text": {
 				"type": "mrkdwn",
 				"text": "Select users (optional)"

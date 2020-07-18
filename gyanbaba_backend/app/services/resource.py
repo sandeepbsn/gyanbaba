@@ -14,6 +14,15 @@ def load_quote_from_api():
     # print("*****||||||||*******|||||||****",data)
     return data
 
+def load_meme_from_api():
+    link = "https://api.imgflip.com/get_memes"
+
+    r = requests.get(url = link)
+
+    data = r.json()
+    print("*****||||||||*******|||||||****",data)
+    return data['data']['memes']
+
 def load_joke_from_api(num):
     link = "https://xkcd.com/"+str(num)+"/info.0.json"
 
@@ -44,6 +53,8 @@ def load_cat():
     db.session.add(cat2)
     cat3=Category(title='video')
     db.session.add(cat3)
+    cat4=Category(title='meme')
+    db.session.add(cat4)
 
     db.session.commit()
 
@@ -63,6 +74,23 @@ def load_data():
     
     db.session.commit()
 
+    ######
+    meme_payload=load_meme_from_api()
+    res=Category.query.filter(Category.title=="meme").all()
+
+    # res=db.session.execute('select id from category where title="quote"')
+    for a in res:
+        cat_id=a.id
+        break
+    
+    for i in range(len(meme_payload)):
+        meme=Resource(cat_id=cat_id,payload=meme_payload[i])
+        db.session.add(meme)
+    
+    db.session.commit()
+
+
+    #####
     res=Category.query.filter(Category.title=="joke").all()
     # res=db.session.execute('select id from category where title="joke"')
     for a in res:
