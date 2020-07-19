@@ -40,7 +40,7 @@ def home22():
     return 'front home'
 
 
-scheduler = BackgroundScheduler()
+scheduler = BackgroundScheduler({'apscheduler.timezone': 'Asia/Calcutta'})
 scheduler.add_jobstore('sqlalchemy', url='mysql://root:Password_123@localhost/schedule')
 
 scheduler.start()
@@ -176,8 +176,18 @@ def test_sched():
     return ""
 
 def slashpin(channel_id, user_id):
-    # response = slack_web_client.conversations_list()
-    # conversations = response["channels"]
+    response = slack_web_client.conversations_list()
+    conversations = response["channels"]
+
+    channels = []
+
+    for channel in conversations:
+        channels.append(channel['id'])
+
+    
+
+    print("conversations are*******", conversations)
+
     pins = []
     blocks = []
 
@@ -213,6 +223,11 @@ def slashpin(channel_id, user_id):
                 }
             }
         )
+        blocks.append(
+            {
+			    "type": "divider"
+		    }
+        )
 
     response = slack_web_client.chat_postMessage(
         channel=channel_id,
@@ -237,10 +252,82 @@ def pins():
         headers = {'Content-Type':'application/json'}, 
         data = json.dumps(body)
     )
-    pin_res = modal_pin()
-    slack_web_client.views_open(
-        trigger_id = data['trigger_id'],
-        view = pin_res,
+
+    response = slack_web_client.conversations_list()
+    conversations = response["channels"]
+
+    channels = []
+    pins = []
+
+    for channel in conversations:
+        channels.append(channel['id'])
+
+    for channel in channels:
+        link = "https://slack.com/api/pins.list?token=xoxp-1204196757331-1202609854693-1207565989093-4acf2cc88a01f10c5d032af2c65e345f&channel=%s&pretty=1"%(channel)
+
+        r = requests.get(url = link)
+
+        channel_data = r.json()
+
+        for item in channel_data['items']:
+            pins.append(item)
+    # print("pins are *********", pins)
+    results = []
+    for pin in pins:
+        if pin['message']['user'] == data['user_id']:
+            time = list(pin['message']['ts'].split('.'))[0]
+            results.append({
+                'text':pin['message']['text'],
+                'link':pin['message']['permalink'],
+                'time':time
+            })
+
+    blocks = []
+    for result in results:
+        blocks.append(
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": result['text'],
+                }
+            },
+        )
+        blocks.append(
+            {
+			"type": "context",
+			"elements": [
+				{
+					"type": "image",
+					"image_url": "https://i.imgur.com/8NkOB1O.png",
+					"alt_text": "Time posted"
+				},
+				{
+					"type": "mrkdwn",
+					"text": '<!date^'+result['time']+'^{date_num} {time_secs}|Posted>'
+				}
+			]
+		}
+        )
+        blocks.append(
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": "<"+result['link']+"|View message>"
+                }
+            }
+        )
+        blocks.append(
+            {
+			    "type": "divider"
+		    }
+        )
+
+    response = slack_web_client.chat_postEphemeral(
+        channel=data['channel_id'],
+        blocks=blocks,
+        user=data['user_id']
     )
 
     return ""  
