@@ -5,6 +5,7 @@ from ..services.video import get_video
 from ..services.resource import load_data,add_vote,load_meme_from_api
 from ..services.user import load_user
 from ..services.test import get_test
+from ..services.schedule import getschedule,addschedule
 import json
 from . import slash
 from flask import request
@@ -16,7 +17,22 @@ def g_home():
     return json.dumps('slash Home')
 
 
+@slash.route('/getschedule/<view_id>')
+def g_res(view_id):
+    data = getschedule(view_id)
+    return json.dumps(data)
 
+@slash.route('/addschedule',methods=['POST','GET'])
+def p_res():
+    data = request.form.to_dict()
+    # view_id=request.json['view_id']
+    # col_name=request.json['col_name']
+    # col_val=request.json['col_value']
+    view_id=data['view_id']
+    col_name=data['col_name']
+    col_val=data['col_value']
+    data = addschedule(view_id,col_name,col_val)
+    return json.dumps('added in schedule')
 
 
 @slash.route('/joke')

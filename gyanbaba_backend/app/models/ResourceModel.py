@@ -9,5 +9,6 @@ class Resource(db.Model):
     cat_id=db.Column(db.Integer,db.ForeignKey('category.id'))
     payload=db.Column(db.JSON)
     up_votes=db.Column(db.Integer,default=0)
-    down_votes=db.Column(db.Integer,default=0)
+    down_votes= db.Column(db.Integer,default=0)
+    
 

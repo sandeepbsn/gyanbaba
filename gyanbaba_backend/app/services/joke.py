@@ -102,7 +102,7 @@ def get_joke(user_channel_id):
     count_hr = 0
     flag = 0
     for a in res2:
-        if count_min >= 2 or count_hr >= 2:
+        if count_min >= 2:
             flag = 1
             break
         com_timestamp = curr_timestamp.replace(microsecond=0)
