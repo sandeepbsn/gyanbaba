@@ -61,6 +61,19 @@ def modal_scheduler():
 		"blocks": [
 			{
 				"type": "input",
+				"block_id":"job",
+				"element": {
+					"type": "plain_text_input",
+					"action_id":"job_name"
+				},
+				"label": {
+					"type": "plain_text",
+					"text": "Job Name",
+					"emoji": True
+				}
+			},
+			{
+				"type": "input",
 				"block_id": "message",
 				"element": {
 					"type": "plain_text_input",
