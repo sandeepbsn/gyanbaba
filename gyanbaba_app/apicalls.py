@@ -4,6 +4,7 @@ import json
 
 url = "http://gyanbaba-api.abhisheksaklani.co"
 
+
 def load_meme():
     mem = requests.get(url+"/slash/getallmeme")
 
@@ -212,7 +213,25 @@ def getquote(channel_id, command_text):
 	    ]
 
         return response
-        
+
+
+def getvideoonly(channel_id, command_text):
+    link = url+"/slash/video"
+
+    params = {
+        "channel_id" : channel_id
+    }
+
+    r = requests.get(url = link, params = params)
+
+    data = r.json()
+
+    if(data['flag']):
+        return data['payload']['video_url']
+    else:
+        return data['payload']['text']
+
+    
 
 #function to fetch videos from slash command(/video)
 def getvideo(channel_id, command_text):
@@ -225,8 +244,6 @@ def getvideo(channel_id, command_text):
     r = requests.get(url = link, params = params)
 
     data = r.json()
-
-    return data['payload']['video_url']
 
     if(data['flag']):
         payload = data['payload']

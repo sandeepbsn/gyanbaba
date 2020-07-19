@@ -18,6 +18,7 @@ from getblocks import *
 from urllib.parse import urlparse, parse_qs
 import requests
 from threading import Timer
+import copy
 
 
 app = Flask(__name__)
@@ -30,7 +31,7 @@ onboarding_tutorials_sent = {}
 
 user_reacted = {}
 
-schedule_response = {}
+# schedule_response = {}
 
 pin_channel = {}
 
@@ -44,7 +45,6 @@ scheduler.add_jobstore('sqlalchemy', url='mysql://root:Password_123@localhost/sc
 
 scheduler.start()
 
-
 def schedule_to_print(data):
     #get time to schedule and text to print from the json
     time = data.get('date_time')
@@ -53,9 +53,8 @@ def schedule_to_print(data):
     #convert to datetime
     date_time = datetime.strptime(time, "%d/%m/%Y %H:%M:%S")
     #schedule the method 'printing_something' to run the the given 'date_time' with the args 'text'
-    
-    job = scheduler.add_job(printing_something, trigger='cron', next_run_time=str(date_time),
-                            args=[text, channels], hour=data['hours'], minute=data['minutes'],second=data['seconds'],month='*', coalesce=False, max_instances=1)
+    custom_id = data['user_id'] + "_" + data['job_name']
+    job = scheduler.add_job(printing_something, id = custom_id, trigger='cron', next_run_time=str(date_time),args=[text, channels], hour=data['hours'], minute=data['minutes'],second=data['seconds'],month='*', coalesce=False, max_instances=1)
 
     return "job details: %s" % job
 
@@ -75,6 +74,85 @@ def printing_something(text,channels):
         requests.post('https://slack.com/api/chat.postMessage', data = params)
 
     return ""
+
+@app.route('/getjobs', methods = ['POST', 'GET'])
+def getjobs():
+    data = request.form.to_dict()
+
+    body = {
+        "text" : "Fetching content"
+    }
+    
+    requests.post(
+        url = data['response_url'], 
+        headers = {'Content-Type':'application/json'}, 
+        data = json.dumps(body)
+    )
+    print("*********", scheduler.get_jobs())
+    jobs = scheduler.get_jobs()
+    job_array = [j.id for j in jobs]
+    print("****************", type(job_array), job_array)
+    user_id = data['user_id']
+    result_array = []
+    result_array.append(
+        {
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": "Jobs for the User "+ '<@'+user_id+'>' 
+            }
+        },
+    )
+    for a in job_array:
+        print("dict is********",a)
+        job_id,job_name = list((a.split('_')))
+
+        if job_id == user_id:
+            result_array.append(
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "plain_text",
+                        "text": "Job ID: "+a,
+                        "emoji": True
+                    }
+                }
+            )
+
+    response = slack_web_client.chat_postEphemeral(
+        channel=data['channel_id'],
+        blocks=result_array,
+        user=data['user_id']
+    )
+
+    return ""
+
+@app.route('/removejobs', methods = ['POST', 'GET'])
+def removejobs():
+    data = request.form.to_dict()
+
+    body = {
+        "text" : "Fetching content"
+    }
+    
+    requests.post(
+        url = data['response_url'], 
+        headers = {'Content-Type':'application/json'}, 
+        data = json.dumps(body)
+    )
+
+    scheduler.remove_job(data['text'])
+
+    response = slack_web_client.chat_postEphemeral(
+        channel=data['channel_id'],
+        text="Job("+data['text']+") is removed",
+        user=data['user_id']
+    )
+
+    return ""
+
+
+
 
 @app.route('/test', methods = ['POST', 'GET'])
 def test_sched():
@@ -97,29 +175,11 @@ def test_sched():
     )
     return ""
 
-
-    # response = slack_web_client.chat_postEphemeral(
-    #     channel=data['channel_id'],
-    #     blocks=res,
-    #     user=data['user_id']
-    # )
-
-    # return ""
-
-# @app.route('/slashpin', methods = ['POST', 'GET'])
 def slashpin(channel_id, user_id):
     # response = slack_web_client.conversations_list()
     # conversations = response["channels"]
     pins = []
     blocks = []
-
-    # for channel in conversations:
-    #     link = "https://slack.com/api/pins.list?token=xoxp-1204196757331-1202609854693-1207565989093-4acf2cc88a01f10c5d032af2c65e345f&channel=%s&pretty=1"%(channel['id'])
-    #     r = requests.get(url = link)
-
-    #     data = r.json()
-
-    #     pins.append(data)
 
     link = "https://slack.com/api/pins.list?token=xoxp-1204196757331-1202609854693-1207565989093-4acf2cc88a01f10c5d032af2c65e345f&channel=%s&pretty=1"%(channel_id)
 
@@ -153,20 +213,6 @@ def slashpin(channel_id, user_id):
                 }
             }
         )
-        # blocks.append((message,perma_link))
-
-    # print("blocks **********",blocks)
-    # res_url = request.form.to_dict()
-
-    # body = {
-    #     "text" : "Fetching content"
-    # }
-    
-    # requests.post(
-    #     url = res_url['response_url'], 
-    #     headers = {'Content-Type':'application/json'}, 
-    #     data = json.dumps(body)
-    # )
 
     response = slack_web_client.chat_postMessage(
         channel=channel_id,
@@ -280,10 +326,9 @@ def slash_video():
         data = json.dumps(body)
     )
 
-    res = getvideo(data['channel_id'], data['text'])
-
-
+    
     if(data['text'] == 'publicly'):
+        res = getvideoonly(data['channel_id'], data['text'])
         response = slack_web_client.chat_postMessage(
         channel=data['channel_id'],
         # token = 'xoxp-1204196757331-1202609854693-1207565989093-4acf2cc88a01f10c5d032af2c65e345f',
@@ -295,10 +340,10 @@ def slash_video():
         user=data['user_id']
     )
     else:
+        res = getvideo(data['channel_id'], data['text'])
         response = slack_web_client.chat_postEphemeral(
         channel=data['channel_id'],
-        # blocks=res,
-        text=res,
+        blocks=res,
         unfurl_links = True,
         unfurl_media = True,
         user=data['user_id']
@@ -315,6 +360,8 @@ def interactions():
 
     data = request.form.to_dict()
     payload = json.loads(data['payload'])
+
+    
     #print("paload is ****", payload)
 
     if payload['type'] == 'block_actions' and payload.get('view')!= None and payload['view']['blocks'][1]['block_id'] == 'pin_channels':
@@ -340,69 +387,129 @@ def interactions():
         return ""
 
 
-    if payload['type'] == 'block_actions' and payload.get('view') != None and payload['view']['blocks'][0]['block_id'] == 'message':
+    if payload['type'] == 'block_actions' and payload.get('view') != None and payload['view']['blocks'][1]['block_id'] == 'message':
+        sched_url = "http://12df2ddd239c.ngrok.io"
         view_id = payload['view']['id']
-        if schedule_response.get(view_id) == None:
-            schedule_response[view_id] = {}
-            block_id = payload['actions'][0]['block_id']
+        block_id = payload['actions'][0]['block_id']
+        if block_id == 'date_sched' or block_id == 'date_end':
+            cur_date = list(payload['actions'][0]['selected_date'].split('-'))[::-1]
+            value = '/'.join(cur_date)
+            date_params = {
+                "view_id":view_id,
+                "col_name":block_id,
+                "col_value":value
+            }
+            requests.post(url=sched_url+'/slash/addschedule', data = date_params)
+        elif block_id == 'hours' or block_id == 'minutes':
+            value = payload['actions'][0]['selected_option']['value']
+            time_params = {
+                "view_id":view_id,
+                "col_name":block_id,
+                "col_value":value
+            }
+            requests.post(url=sched_url+'/slash/addschedule', data = time_params)
 
-            if block_id == 'date_sched' or 'date_end':
-                cur_date = list(payload['actions'][0]['selected_date'].split('-'))[::-1]
-                value = '/'.join(cur_date)
-            elif block_id == 'hours' or block_id == 'minutes':
-                value = payload['actions'][0]['selected_option']['value']
+        # if schedule_response.get(view_id) == None:
+        #     schedule_response[view_id] = {}
+        #     block_id = payload['actions'][0]['block_id']
+        #     if block_id == 'date_sched' or block_id == 'date_end':
+        #         cur_date = list(payload['actions'][0]['selected_date'].split('-'))[::-1]
+        #         value = '/'.join(cur_date)
+        #         date_params = {
+        #             "view_id":view_id,
+        #             "col_name":block_id,
+        #             "col_value":value
+        #         }
+        #     elif block_id == 'hours' or block_id == 'minutes':
+        #         value = payload['actions'][0]['selected_option']['value']
+        #         time_params = {
+        #             "view_id":view_id,
+        #             "col_name":block_id,
+        #             "col_value":value
+        #         }
 
+        #     schedule_response[view_id][block_id] = value
+        # else:
+        #     block_id = payload['actions'][0]['block_id']
 
-            schedule_response[view_id][block_id] = value
-        else:
-            block_id = payload['actions'][0]['block_id']
+        #     if block_id == 'date_sched' or block_id == 'date_end':
+        #         cur_date = list(payload['actions'][0]['selected_date'].split('-'))[::-1]
+        #         value = '/'.join(cur_date)
+        #     elif block_id == 'hours' or block_id == 'minutes':
+        #         value = payload['actions'][0]['selected_option']['value']
+        #     # elif block_id == 'channels':
+        #     #     value = payload['actions'][0]['selected_channel']
+        #     elif block_id == 'users':
+        #         value = payload['actions'][0]['selected_user']
 
-            if block_id == 'date_sched' or block_id == 'date_end':
-                cur_date = list(payload['actions'][0]['selected_date'].split('-'))[::-1]
-                value = '/'.join(cur_date)
-            elif block_id == 'hours' or block_id == 'minutes':
-                value = payload['actions'][0]['selected_option']['value']
-            # elif block_id == 'channels':
-            #     value = payload['actions'][0]['selected_channel']
-            elif block_id == 'users':
-                value = payload['actions'][0]['selected_user']
-
-            schedule_response[view_id][block_id] = value
+        #     schedule_response[view_id][block_id] = value
 
         return ""
 
-    if payload['type'] == 'view_submission' and payload.get('view') != None and payload['view']['blocks'][0]['block_id'] == 'message':
+    if payload['type'] == 'view_submission' and payload.get('view') != None and payload['view']['blocks'][1]['block_id'] == 'message':
+        sched_url = "http://12df2ddd239c.ngrok.io"
         text = payload['view']['state']['values']['message']['text']['value']
         channels = payload['view']['state']['values']['channels']['name']['selected_channels']
+        job_name = payload['view']['state']['values']['job']['job_name']['value']
         
         view_id = payload['view']['id']
+        user_id = payload['user']['id']
+    
+        sched_res = requests.get(url=sched_url+'/slash/getschedule/'+view_id)
+        schedule_response = sched_res.json()
+        if schedule_response['flag'] =='true':
+
+            for keys in schedule_response:
+                print(schedule_response[keys])
+                if schedule_response[keys] == 'None' or schedule_response[keys] =='null' or schedule_response[keys] == None:
+                    print("foudn null ************")
+                    return {"response_action":"clear"}
+
+            schedule_response['seconds'] = '00'
+            schedule_response['text'] = text
+            schedule_response['channels'] = channels
+            schedule_response['user_id'] = user_id
+            schedule_response['job_name'] = job_name
+
+            schedule_response['time'] = schedule_response['hours'] + ":" + schedule_response['minutes'] + ":" + schedule_response['seconds'] 
+
+            schedule_response['date_time'] = schedule_response['date_sched'] + " " + schedule_response['time']
+            print("shchehd****", schedule_response)
+            schedule_to_print(schedule_response)
+
+        else:
+            return {"response_action":"clear"}
+
+
+        # print("response*********", sched_res.text)
         # if schedule_response.get(view_id) == None:
         #     schedule_response[view_id] = {}
 
-        if view_id not in schedule_response:
-            return {"response_action":"clear"}            
+        # if view_id not in schedule_response:
+        #     return {"response_action":"clear"}            
 
-        if schedule_response[view_id].get('hours') == None or schedule_response[view_id].get('minutes') == None:
-            return {"response_action":"clear"}            
+        # if schedule_response[view_id].get('hours') == None or schedule_response[view_id].get('minutes') == None or schedule_response[view_id].get('date_sched') == None or schedule_response[view_id].get('date_end') == None:
+        #     schedule_response.clear()
+        #     return {"response_action":"clear"}            
 
-        if schedule_response[view_id].get('date_sched') == None:
-            schedule_response[view_id]['date_sched'] = datetime.now().date().strftime('%d/%m/%Y')
+        # if schedule_response[view_id].get('date_sched') == None:
+        #     schedule_response[view_id]['date_sched'] = datetime.now().date().strftime('%d/%m/%Y')
 
-        if schedule_response[view_id].get('date_end') == None:
-            schedule_response[view_id]['date_end'] = datetime.now().date().strftime('%d/%m/%Y')
+        # if schedule_response[view_id].get('date_end') == None:
+        #     schedule_response[view_id]['date_end'] = datetime.now().date().strftime('%d/%m/%Y')
 
 
-        schedule_response[view_id]['seconds'] = '00'
-        schedule_response[view_id]['text'] = text
-        schedule_response[view_id]['channels'] = channels
+        # schedule_response[view_id]['seconds'] = '00'
+        # schedule_response[view_id]['text'] = text
+        # schedule_response[view_id]['channels'] = channels
 
-        schedule_response[view_id]['time'] = schedule_response[view_id]['hours'] + ":" + schedule_response[view_id]['minutes'] + ":" + schedule_response[view_id]['seconds'] 
+        # schedule_response[view_id]['time'] = schedule_response[view_id]['hours'] + ":" + schedule_response[view_id]['minutes'] + ":" + schedule_response[view_id]['seconds'] 
 
-        schedule_response[view_id]['date_time'] = schedule_response[view_id]['date_sched'] + " " + schedule_response[view_id]['time']
+        # schedule_response[view_id]['date_time'] = schedule_response[view_id]['date_sched'] + " " + schedule_response[view_id]['time']
 
-        schedule_to_print(schedule_response[view_id])
+        # schedule_to_print(schedule_response[view_id])
         
-        print("response*************", schedule_response)
+        # print("response*************", schedule_response)
         return {"response_action":"clear"}
 
     if payload['type'] == 'view_submission' and payload.get('view') != None and payload['view']['blocks'][0]['block_id'] == '0':
