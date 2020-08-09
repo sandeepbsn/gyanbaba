@@ -7,28 +7,34 @@
 
 
 ### Slash commands
-<img src="./readme/startcommand.png" alt="start" width="300" height="400"/>
+<img src="./readme/startcommand.png" alt="start" width="800" height="500"/>
 
 ### Getting a joke
-<img src="./readme/joke.png" alt="joke" width="300" height="400"/>
+<img src="./readme/joke.png" alt="joke" width="800" height="500"/>
 
 ### Getting a video and quote
-<img src="./readme/quote.png" alt="video and quote" width="300" height="400"/>
+<img src="./readme/quote.png" alt="video and quote" width="800" height="500"/>
 
 ### Generating a meme
-Getting user inputs
-<img src="./readme/generatememe.png" alt="meme inputs" width="300" height="400"/>
-Generating a meme
-<img src="./readme/meme.png" alt="meme" width="300" height="400"/>
+**Getting user inputs**
+<br/>
+<img src="./readme/generatememe.png" alt="meme inputs" width="800" height="500"/>
+<br/>
+**Generating a meme**
+<br/>
+<img src="./readme/meme.png" alt="meme" width="800" height="500"/>
 
 ### Scheduling a task
-Getting user inputs
-<img src="./readme/scheduler.png" alt="scheduling a task" width="300" height="400"/>
-Executing the task
-<img src="./readme/scheduledmsg.png" alt="executing a task" width="300" height="400"/>
+**Getting user inputs**
+<br/>
+<img src="./readme/scheduler.png" alt="scheduling a task" width="800" height="500"/>
+<br/>
+**Executing the task**
+<br/>
+<img src="./readme/scheduledmsg.png" alt="executing a task" width="800" height="500"/>
 
 ### Getting the list of pinned messages
-<img src="./readme/pins.png" alt="pins" width="300" height="400"/>
+<img src="./readme/pins.png" alt="pins" width="800" height="500"/>
 
 
 
