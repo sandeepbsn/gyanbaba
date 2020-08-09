@@ -36,6 +36,8 @@
 ### Getting the list of pinned messages
 <img src="./readme/pins.png" alt="pins" width="800" height="500"/>
 
+### Contributors [Abhishek Saklani](https://github.com/abhi-1408)
+
 
 
 
