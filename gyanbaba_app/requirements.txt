@@ -17,5 +17,5 @@ slackclient==2.7.2
 slackeventsapi==2.2.0
 typing-extensions==3.7.4.2
 urllib3==1.26.5
-Werkzeug==1.0.1
+Werkzeug==2.2.3
 yarl==1.4.2
